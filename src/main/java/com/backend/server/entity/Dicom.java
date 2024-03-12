@@ -1,39 +1,12 @@
 package com.backend.server.entity;
 
 
-// import lombok.AllArgsConstructor;
-// import lombok.Builder;
-// import lombok.Data;
-// import lombok.NoArgsConstructor;
-
-// import jakarta.persistence.Entity;
-// import jakarta.persistence.GeneratedValue;
-// import jakarta.persistence.GenerationType;
-// import jakarta.persistence.Id;
-// import jakarta.persistence.Table;
-// @Entity
-// @Table(name = "DICOM_DATA")
-// @Data
-// @AllArgsConstructor
-// @NoArgsConstructor
-// @Builder
-// public class Dicom {
-
-//     @Id
-//     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//     private Long id;
-
-//     private String name;
-//     private String type;
-//     private String filePath;
-// }
-
-
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -49,9 +22,7 @@ import jakarta.persistence.Table;
 @Builder
 public class Dicom {
 
-    // @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // private Long id;
+   
     @Id
     private Long p_id;
     private String name;
@@ -59,7 +30,7 @@ public class Dicom {
     private String filePath;
 
    
-     @OneToOne(fetch = FetchType.EAGER)
+     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
    @JoinColumn(name = "id")
     private Patient patient;
 

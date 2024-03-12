@@ -28,6 +28,11 @@ public class AuthService {
     public ReqRes signUp(ReqRes registrationRequest){
         ReqRes resp = new ReqRes();
         try {
+            if (ourUserRepo.findByEmail(registrationRequest.getEmail()) == null) {
+                resp.setStatusCode(500); // Bad Request
+                resp.setError("Email already exists");
+                return resp;
+            }
             OurUsers ourUsers = new OurUsers();
             ourUsers.setEmail(registrationRequest.getEmail());
             ourUsers.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
@@ -51,6 +56,11 @@ public class AuthService {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signinRequest.getEmail(),signinRequest.getPassword()));
             var user = ourUserRepo.findByEmail(signinRequest.getEmail()).orElseThrow();
+            if (ourUserRepo.findByEmail(signinRequest.getEmail()) == null) {
+                response.setStatusCode(500); // Bad Request
+                response.setError("Email does not exists");
+                return response;
+            }
             System.out.println("USER IS: "+ user);
             var jwt = jwtUtils.generateToken(user);
             var refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), user);

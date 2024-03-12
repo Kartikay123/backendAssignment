@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.server.entity.Patient;
 import com.backend.server.exception.PatientNotFoundException;
+import com.backend.server.repository.DicomRepository;
+import com.backend.server.repository.PatientDetailsRepository;
 import com.backend.server.repository.PatientRepository;
 import com.backend.server.service.PatientService;
 
@@ -29,6 +31,12 @@ public class PatientController {
     private PatientRepository patientRepository;
     @Autowired
     private PatientService patientService;
+
+    @Autowired
+    private PatientDetailsRepository patientDetailsRepository;
+
+    @Autowired
+    private DicomRepository dicomRepository;
 
     @PostMapping("/patient")
    Patient newPatient(@NonNull @RequestBody Patient newPatient)
@@ -72,6 +80,14 @@ public class PatientController {
     String deletePatient(@PathVariable Long id){
         if(!patientRepository.existsById(id)){
             throw new PatientNotFoundException(id);
+        }
+        if(patientDetailsRepository.existsById(id))
+        {
+            patientDetailsRepository.deleteById(id);
+        }
+        if(dicomRepository.existsById(id))
+        {
+            dicomRepository.deleteById(id);
         }
         patientRepository.deleteById(id);
         return  "User with id "+id+" has been deleted success.";
