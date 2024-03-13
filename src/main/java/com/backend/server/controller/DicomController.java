@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,8 +43,8 @@ public class DicomController {
 	
 
      @GetMapping("/view/{p_id}")
-    public ResponseEntity<?> downLoadImage (@PathVariable("p_id") Long p_id, HttpServletRequest request) throws IOException{
-        Resource resource= dicom_service.downloadImage(p_id);
+    public ResponseEntity<?> viewDicomImage (@PathVariable("p_id") Long p_id, HttpServletRequest request) throws IOException{
+        Resource resource= dicom_service.viewDicomImage(p_id);
         String mimeType;
 
         try{
@@ -65,7 +66,15 @@ public class DicomController {
         return response;
 
     }
-    
-
+    @PutMapping("/update/{p_id}")
+    public String updateDicom(@PathVariable("p_id")Long p_id,MultipartFile file) throws IOException {
+       return dicom_service.updateDicom(p_id,file);
+    }
+    @GetMapping("/upload/{id}")
+    public ResponseEntity<Boolean> checkFileExistence(@PathVariable("id") Long id) {
+        boolean fileExists = dicom_service.checkFileExistence(id);
+        
+        return ResponseEntity.status(HttpStatus.OK).body(fileExists);
+    }
 }
 

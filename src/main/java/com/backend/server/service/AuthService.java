@@ -27,12 +27,15 @@ public class AuthService {
 
     public ReqRes signUp(ReqRes registrationRequest){
         ReqRes resp = new ReqRes();
+        
         try {
+            System.out.println(ourUserRepo.findByEmail(registrationRequest.getEmail()));
             if (ourUserRepo.findByEmail(registrationRequest.getEmail()) == null) {
                 resp.setStatusCode(500); // Bad Request
                 resp.setError("Email already exists");
                 return resp;
             }
+            
             OurUsers ourUsers = new OurUsers();
             ourUsers.setEmail(registrationRequest.getEmail());
             ourUsers.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));

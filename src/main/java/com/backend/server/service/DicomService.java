@@ -4,7 +4,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.io.DicomInputStream;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -89,7 +88,6 @@ public class DicomService {
 
         PatientDetails patientDetails = new PatientDetails();
 
-
         // Calculate age
         LocalDate birthDateLocal = birthDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate studyDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -115,7 +113,7 @@ public class DicomService {
     }
 
     @SuppressWarnings("null")
-    public org.springframework.core.io.Resource downloadImage(Long p_id) throws IOException {
+    public org.springframework.core.io.Resource viewDicomImage(Long p_id) throws IOException {
 
         Optional<Dicom> optional_dicom = fileDataRepository.findById(p_id);
         Dicom dicom;
@@ -172,13 +170,88 @@ public class DicomService {
         return patientDicomDetails;
     }
 
-    // public String updateDicomFileSystem(Long id, MultipartFile file) {
+    @SuppressWarnings("unused")
+    public String updateDicom(Long p_id, MultipartFile file) throws IOException {
 
-    // Dicom fileData=DicomRepository.save(Dicom);
-    // if (fileData != null) {
-    // return filePath;
-    // }
-    // return null;
-    // }
+        String filePath = FOLDER_PATH + Long.toString(p_id) + file.getOriginalFilename();
+
+        @SuppressWarnings("null")
+        Optional<Dicom> optional_dicom = fileDataRepository.findById(p_id);
+        if (!optional_dicom.isPresent()) {
+            throw new DicomNotFoundException("Dicom not available");
+        }
+
+        @SuppressWarnings("null")
+        Dicom fileData = fileDataRepository.save(Dicom.builder()
+                .name(file.getOriginalFilename())
+                .p_id(p_id)
+                .type(file.getContentType())
+                .filePath(filePath).build());
+
+        fileData.setPatient(patient_service.getPatientById(p_id));
+
+        File newFile = new File(filePath);
+        file.transferTo(newFile);
+
+        Path dicomFile = newFile.toPath();
+        @SuppressWarnings("resource")
+        DicomInputStream dis = new DicomInputStream(dicomFile.toFile());
+
+        @SuppressWarnings("deprecation")
+        Attributes fileAttributes = dis.readDataset(-1, -1);
+
+        LocalDate localDate = LocalDate.of(1970, Month.JANUARY, 01);
+
+        // DCM4CHE reads patient Attributes
+        String dicomPatientId = fileAttributes.getString(Tag.PatientID) == null ? "NONE"
+                : fileAttributes.getString(Tag.PatientID);
+        String patientName = fileAttributes.getString(Tag.PatientName) == null ? "NONE"
+                : fileAttributes.getString(Tag.PatientName);
+        Date date = fileAttributes.getDate(Tag.StudyDate) == null
+                ? Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                : fileAttributes.getDate(Tag.StudyDate);
+        String age = fileAttributes.getString(Tag.PatientAge) == null ? "NONE"
+                : fileAttributes.getString(Tag.PatientAge);
+        Date birthDate = fileAttributes.getDate(Tag.PatientBirthDate) == null
+                ? Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                : fileAttributes.getDate(Tag.PatientBirthDate);
+        String patientSex = fileAttributes.getString(Tag.PatientSex) == null ? "NONE"
+                : fileAttributes.getString(Tag.PatientSex);
+
+        PatientDetails patientDetails = new PatientDetails();
+
+        // Calculate age
+        LocalDate birthDateLocal = birthDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate studyDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        Period agePeriod = Period.between(birthDateLocal, studyDate);
+        String ageString = agePeriod.getYears() + " years";
+
+        // Set ageString to patientDetails
+        // Setting The attributes in Dicom entity
+        patientDetails.setpatient_did(p_id);
+        patientDetails.setPatientId(dicomPatientId);
+        patientDetails.setPatientName(patientName);
+        patientDetails.setStudyUploadDate(date);
+        patientDetails.setAge(ageString);
+        patientDetails.setBirthDate(birthDate);
+        patientDetails.setSex(patientSex);
+
+        PatientDetails patientDetails2 = patient_dDetailsRepository.save(patientDetails);
+        if (fileData != null) {
+            return filePath;
+        }
+        return null;
+
+    }
+
+    public boolean checkFileExistence(Long p_id) {
+
+        @SuppressWarnings("null")
+        Optional<Dicom> optional_dicom = fileDataRepository.findById(p_id);
+        if (!optional_dicom.isPresent()) {
+            return false;
+        }
+       return true;
+    }
 
 }
